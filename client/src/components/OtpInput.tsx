@@ -1,9 +1,9 @@
-import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormContext } from "../context/FormContext";
 import { SomeError, useError } from "../hooks/useError";
-import { useThrottledToast } from "../hooks/useThrottledToast";
+import { useMobileOtpAutofill } from "../hooks/useMobileOtpAutofill";
+import axios from "../utils/axios";
 import { BASE_URL } from "../utils/constants";
 
 interface ValidateOtpResponse {
@@ -15,9 +15,7 @@ interface ErrorResponse {
   message: string;
 }
 
-interface Props {}
-
-const OtpInput: React.FC<Props> = () => {
+const OtpInput: React.FC = () => {
   const {
     phoneNumber,
     countryCode,
@@ -28,10 +26,9 @@ const OtpInput: React.FC<Props> = () => {
     setBerealToken,
   } = useFormContext();
   const navigate = useNavigate();
-  const throttledToast = useThrottledToast();
 
   const [loading, setLoading] = useState<boolean>(false);
-  const { error, setError } = useError(
+  const { error, setError } = useError<ErrorResponse>(
     "Couldn't validate your verification code. Please try again."
   );
 
@@ -72,38 +69,6 @@ const OtpInput: React.FC<Props> = () => {
     setToken,
   ]);
 
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    const fetchOtp = async () => {
-      if ("OTPCredential" in window) {
-        try {
-          const content = await navigator.credentials.get({
-            otp: { transport: ["sms"] },
-            signal: abortController.signal,
-          });
-
-          if (!content) return;
-
-          setOtpCode(content.code);
-          handleOtpSubmit();
-        } catch (error) {
-          console.warn(error);
-          throttledToast(
-            "Couldn't paste your verification code automatically. Enter it manually.",
-            "warning"
-          );
-        }
-      }
-    };
-
-    fetchOtp();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [handleOtpSubmit, setOtpCode, throttledToast]);
-
   const validateAndSubmitOtpCode = async () => {
     setError(null);
     setLoading(true);
@@ -121,6 +86,8 @@ const OtpInput: React.FC<Props> = () => {
       setLoading(false);
     }
   };
+
+  useMobileOtpAutofill(setOtpCode, handleOtpSubmit);
 
   return (
     <div className="w-full">

@@ -27,8 +27,8 @@ from .celery import bcelery, make_video  # noqa: E402
 from .logger import logger  # noqa: E402
 from .utils import (  # noqa: E402
     CONTENT_PATH,
-    DEFAULT_SONG_PATH,
     DEFAULT_SHORT_SONG_PATH,
+    DEFAULT_SONG_PATH,
     EXPORTS_PATH,
     FLASK_ENV,
     GIT_COMMIT_HASH,
@@ -234,7 +234,7 @@ def task_status(task_id) -> tuple[Response, int]:
                 "message": "An error occurred processing your task. Try again later.",
                 "error": str(task.info),
             }
-            return jsonify(response), 500
+            return jsonify(response), 200
 
         response = {"status": task.status, "result": task.result if task.state == "SUCCESS" else None}
         return jsonify(response), 200

@@ -1,16 +1,27 @@
-import React from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { useFormContext } from "../context/FormContext";
+import { useError } from "../hooks/useError";
+import axios from "../utils/axios";
 import { BASE_URL } from "../utils/constants";
 
-interface Props {}
+interface ErrorResponse {
+  message: string;
+}
 
-const Download: React.FC<Props> = () => {
-  const { countryCode, phoneNumber, berealToken, videoFilename } =
+const Download: React.FC = () => {
+  const { countryCode, phoneNumber, berealToken, videoFilename, reset } =
     useFormContext();
+  const { setErrorAndNavigate } = useError<ErrorResponse>(
+    "Failed to download video. Try again later."
+  );
 
-  const videoUrl = `${BASE_URL}/video/${videoFilename}?phone=${countryCode}${phoneNumber}&berealToken=${berealToken}`;
+  const videoUrl = useMemo(
+    () =>
+      `${BASE_URL}/video/${videoFilename}?phone=${countryCode}${phoneNumber}&berealToken=${berealToken}`,
+    [berealToken, countryCode, phoneNumber, videoFilename]
+  );
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     const link = document.createElement("a");
     link.href = videoUrl;
     link.download = "recap.mp4";
@@ -18,7 +29,24 @@ const Download: React.FC<Props> = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [videoUrl]);
+
+  useEffect(() => {
+    const checkVideo = async () => {
+      if (!videoUrl) {
+        return;
+      }
+
+      try {
+        await axios.get(videoUrl);
+      } catch (error) {
+        reset();
+        setErrorAndNavigate("Failed to download video. Try again later.", "/");
+      }
+    };
+
+    checkVideo();
+  }, [reset, setErrorAndNavigate, videoUrl]);
 
   return (
     <>

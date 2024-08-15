@@ -1,8 +1,8 @@
-import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormContext } from "../context/FormContext";
 import { SomeError, useError } from "../hooks/useError";
+import axios from "../utils/axios";
 import { BASE_URL } from "../utils/constants";
 import CountryCode from "./CountryCode";
 
@@ -14,14 +14,13 @@ interface ErrorResponse {
   message: string;
 }
 
-interface Props {}
-
-const PhoneInput: React.FC<Props> = () => {
-  const { setPhoneNumber, countryCode, setOtpSession } = useFormContext();
+const PhoneInput: React.FC = () => {
+  const { setPhoneNumber, countryCode, setOtpSession, berealToken, reset } =
+    useFormContext();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState<boolean>(false);
-  const { error, setError } = useError(
+  const { error, setError } = useError<ErrorResponse>(
     "Couldn't send the verification code. Please try again."
   );
 
@@ -37,6 +36,8 @@ const PhoneInput: React.FC<Props> = () => {
 
   const handlePhoneSubmit = async (input: string): Promise<void> => {
     try {
+      reset();
+
       setPhoneNumber(input);
 
       const response = await axios.post<OtpResponse>(
@@ -67,7 +68,8 @@ const PhoneInput: React.FC<Props> = () => {
         await handlePhoneSubmit(phoneNumber);
       }
     } catch (error) {
-      // this is unexpected; it means an error was thrown *in validation* or by handlePhoneSubmit; just log it
+      // this is unexpected; it means an error was thrown *in validation* or by handlePhoneSubmit
+      // ...just log it
       console.error(error);
     } finally {
       setLoading(false);
@@ -104,6 +106,14 @@ const PhoneInput: React.FC<Props> = () => {
       >
         Send verification code
       </button>
+      {berealToken && (
+        <button
+          className="w-full mt-4 px-3 py-1.5 bg-[#0f0f0f] text-white font-normal rounded-md border border-white flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => navigate("/settings")}
+        >
+          (or, use existing token from last login)
+        </button>
+      )}
     </div>
   );
 };

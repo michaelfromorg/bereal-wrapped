@@ -1,5 +1,13 @@
-import React, { createContext, ReactNode, useContext, useState } from "react";
-import { MODES, Option, YEARS } from "../utils/constants";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { MODES, YEARS } from "../utils/constants";
+import { isSecondHalfOfYear } from "../utils/helpers";
+import { Option } from "../utils/types";
 
 interface FormState {
   phoneNumber: string;
@@ -31,6 +39,8 @@ interface FormContextType extends FormState {
   setMode: (mode: Option | null) => void;
   setTaskId: (taskId: string) => void;
   setVideoFilename: (videoFilename: string) => void;
+
+  reset: () => void;
 }
 
 const FormContext = createContext<FormContextType | undefined>(undefined);
@@ -39,48 +49,77 @@ interface FormProviderProps {
   children: ReactNode;
 }
 
-export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [countryCode, setCountryCode] = useState<string>("");
-  const [otpSession, setOtpSession] = useState<string>("");
-  const [otpCode, setOtpCode] = useState<string>("");
-  const [token, setToken] = useState<string>("");
-  const [berealToken, setBerealToken] = useState<string>("");
-  const [year, setYear] = useState<Option | null>(YEARS[0]);
-  const [file, setFile] = useState<File | null>(null);
-  const [disableMusic, setDisableMusic] = useState<boolean>(false);
-  const [displayDate, setDisplayDate] = useState<boolean>(false);
-  const [mode, setMode] = useState<Option | null>(MODES[0]);
-  const [taskId, setTaskId] = useState<string>("");
-  const [videoFilename, setVideoFilename] = useState<string>("");
+const STORAGE_KEY = "formState";
 
-  const value = {
-    phoneNumber,
-    setPhoneNumber,
-    countryCode,
-    setCountryCode,
-    otpSession,
-    setOtpSession,
-    otpCode,
-    setOtpCode,
-    token,
-    setToken,
-    berealToken,
-    setBerealToken,
-    year,
-    setYear,
-    file,
-    setFile,
-    disableMusic,
-    setDisableMusic,
-    displayDate,
-    setDisplayDate,
-    mode,
-    setMode,
-    taskId,
-    setTaskId,
-    videoFilename,
-    setVideoFilename,
+const getInitialState = (): FormState => {
+  const storedState = localStorage.getItem(STORAGE_KEY);
+
+  if (storedState) {
+    const parsedState = JSON.parse(storedState);
+    parsedState.year = parsedState.year
+      ? YEARS.find((y) => y.value === parsedState.year.value) || null
+      : null;
+    parsedState.mode = parsedState.mode
+      ? MODES.find((m) => m.value === parsedState.mode.value) || null
+      : null;
+    parsedState.file = null;
+    return parsedState;
+  }
+
+  return {
+    phoneNumber: "",
+    countryCode: "",
+    otpSession: "",
+    otpCode: "",
+    token: "",
+    berealToken: "",
+    year: isSecondHalfOfYear() ? YEARS[0] : YEARS[1],
+    file: null,
+    disableMusic: false,
+    displayDate: false,
+    mode: MODES[0],
+    taskId: "",
+    videoFilename: "",
+  };
+};
+
+export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
+  const [state, setState] = useState<FormState>(getInitialState);
+
+  // mirror writes to localStorage
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...state, file: undefined })
+    );
+  }, [state]);
+
+  const setStateAndStore = <K extends keyof FormState>(
+    key: K,
+    value: FormState[K]
+  ) => {
+    setState((prevState) => ({ ...prevState, [key]: value }));
+  };
+
+  const value: FormContextType = {
+    ...state,
+    setPhoneNumber: (value) => setStateAndStore("phoneNumber", value),
+    setCountryCode: (value) => setStateAndStore("countryCode", value),
+    setOtpSession: (value) => setStateAndStore("otpSession", value),
+    setOtpCode: (value) => setStateAndStore("otpCode", value),
+    setToken: (value) => setStateAndStore("token", value),
+    setBerealToken: (value) => setStateAndStore("berealToken", value),
+    setYear: (value) => setStateAndStore("year", value),
+    setFile: (value) => setStateAndStore("file", value),
+    setDisableMusic: (value) => setStateAndStore("disableMusic", value),
+    setDisplayDate: (value) => setStateAndStore("displayDate", value),
+    setMode: (value) => setStateAndStore("mode", value),
+    setTaskId: (value) => setStateAndStore("taskId", value),
+    setVideoFilename: (value) => setStateAndStore("videoFilename", value),
+    reset: () => {
+      localStorage.removeItem(STORAGE_KEY);
+      setState(getInitialState());
+    },
   };
 
   return <FormContext.Provider value={value}>{children}</FormContext.Provider>;

@@ -1,11 +1,10 @@
 import { useState } from "react";
 import Select from "react-select";
 
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useFormContext } from "../context/FormContext";
 import { SomeError, useError } from "../hooks/useError";
-import { useThrottledToast } from "../hooks/useThrottledToast";
+import axios from "../utils/axios";
 import { BASE_URL, MAX_FILE_SIZE, MODES, YEARS } from "../utils/constants";
 import { customStyles } from "./CountryCode";
 
@@ -17,9 +16,7 @@ interface ErrorResponse {
   message: string;
 }
 
-interface Props {}
-
-const Settings: React.FC<Props> = () => {
+const Settings: React.FC = () => {
   const {
     countryCode,
     phoneNumber,
@@ -38,10 +35,9 @@ const Settings: React.FC<Props> = () => {
     setTaskId,
   } = useFormContext();
   const navigate = useNavigate();
-  const throttledToast = useThrottledToast();
 
   const [loading, setLoading] = useState<boolean>(false);
-  const { error, setError } = useError(
+  const { error, setError } = useError<ErrorResponse>(
     "An unexpected error occurred in creating your video. Please refresh the page and try again."
   );
 
