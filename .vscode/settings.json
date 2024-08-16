@@ -11,7 +11,8 @@
     "*.conf": "ini",
     "*.rdb": "sql",
     "*.local": "plaintext",
-    "log.log*": "plaintext"
+    "log.log*": "plaintext",
+    "site.webmanifest": "json",
   },
   "files.insertFinalNewline": true,
   "editor.formatOnSave": true,
