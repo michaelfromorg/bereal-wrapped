@@ -5,16 +5,15 @@ This script generates a slideshow from a folder of images and a music file.
 import os
 
 import librosa
-
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.fx import all as vfx
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
-
 from PIL import Image, ImageDraw, ImageFont
 
 from .logger import logger
 from .utils import (
     CONTENT_PATH,
+    DEFAULT_SONG_PATH,
     ENDCARD_TEMPLATE_IMAGE_PATH,
     EXPORTS_PATH,
     FONT_BASE_PATH,
@@ -69,7 +68,7 @@ def create_slideshow3(
     """
     Create a video slideshow from a target set of images.
     """
-    logger.debug("Creating slideshow for %s, %s", phone, year)
+    logger.info("Creating slideshow for %s, %s", phone, year)
 
     if not os.path.isdir(input_folder):
         raise ValueError("Input folder does not exist!")
@@ -142,6 +141,9 @@ def build_slideshow(
     """
     Create the actual slideshow.
     """
+    if not os.path.isfile(song_path):
+        song_path = DEFAULT_SONG_PATH
+
     audio_file = librosa.load(song_path)
     y, sr = audio_file
     _, beat_frames = librosa.beat.beat_track(y=y, sr=sr)

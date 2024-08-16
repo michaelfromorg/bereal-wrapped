@@ -62,3 +62,10 @@ typecheck:
 format:
 	@echo "Formatting the code..."
 	@ruff check bereal && ruff format bereal
+
+clean:
+	rm *.log*
+	rm *.rdb
+	rm bereal/*.db
+	rm exports/*.mp4
+	rm -rf content/*/
